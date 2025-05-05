@@ -18,7 +18,7 @@ This project was created by **River McGuffie**, a data science student and wareh
 
 ## Tech Stack
 
-- **Frontend**: HTML, CSS, JavaScript (or React – coming soon!)
+- **Frontend**: HTML, CSS, JavaScript
 - **Backend**: Python + Flask 
 - **AI Model**: OpenAI GPT-4o API
 - **Hosting**: Render
@@ -37,7 +37,7 @@ I named the assistant **C.A.R.A.** after someone I love, because this project co
 ## Current Status
 
 This project is a work in progress!  
-I’m learning as I go—from building the backend to wiring the chatbot UI—and documenting everything along the way. If you’re a fellow learner or want to collaborate, feel free to contribute or follow the journey.
+I’m learning as I go—from building the backend to wiring the chatbot UI—and documenting everything along the way.
 
 ---
 
