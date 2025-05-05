@@ -1,6 +1,6 @@
 # C.A.R.A. – Custom Assistant for Research & Analytics
 
-**C.A.R.A. (Custom Assistant for Research & Analytics)** is a GPT-powered AI chatbot built to assist learners, job seekers, and aspiring data analysts with SQL, Python, and data concepts—delivered with personality, empathy, and a human touch.  
+**C.A.R.A. (Custom Assistant for Research & Analytics)** is a GPT-powered AI chatbot built to assist learners, job seekers, and data students with SQL, Python, and data concepts—delivered with personality, empathy, and a human touch.  
 
 This project was created by **River McGuffie**, a data science student and warehouse worker who got tired of being rejected and overlooked, and decided to build his own damn AI. 
 
