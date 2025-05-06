@@ -72,6 +72,16 @@
             font-size: 1rem;
         }
 
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-icon {
+            cursor: pointer;
+            font-size: 1.5rem;
+            line-height: 2.5rem;
+        }
+
         button {
             padding: 0.8rem 1.2rem;
             font-size: 1rem;
@@ -85,24 +95,6 @@
         button:hover {
             background-color: #444;
         }
-
-        .file-upload {
-            display: flex;
-            align-items: center;
-        }
-
-        .file-upload label {
-            display: inline-block;
-            cursor: pointer;
-            padding: 0.6rem;
-            border-radius: 0.5rem;
-            background-color: #2c2c2c;
-            color: #f1f1f1;
-        }
-
-        .file-upload input[type="file"] {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -111,60 +103,56 @@
 
     <div class="chat-container" id="responseBox"></div>
 
-    <div class="input-container">
-        <textarea id="message" rows="2" placeholder="Ask me anything..."></textarea>
-        <div class="file-upload">
-            <label for="fileInput">📎</label>
-            <input type="file" id="fileInput">
+    <form id="chatForm" enctype="multipart/form-data">
+        <div class="input-container">
+            <textarea id="message" name="message" rows="2" placeholder="Ask me anything..."></textarea>
+            <input type="file" id="file" name="file" />
+            <label for="file" class="upload-icon" title="Attach a file">📎</label>
+            <button type="submit">Send</button>
         </div>
-        <button onclick="sendMessage()">Send</button>
-    </div>
+    </form>
 
     <script>
-        document.getElementById("message").addEventListener("keypress", function (e) {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
+        const form = document.getElementById('chatForm');
+        const responseBox = document.getElementById('responseBox');
 
-        async function sendMessage() {
-            const messageInput = document.getElementById("message");
-            const fileInput = document.getElementById("fileInput");
-            const responseBox = document.getElementById("responseBox");
-            const userMessage = messageInput.value;
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-            if (!userMessage.trim()) return;
+            const message = document.getElementById('message').value;
+            const fileInput = document.getElementById('file');
+            const userId = getUserId();
 
-            const userBubble = document.createElement("div");
-            userBubble.className = "message user";
-            userBubble.textContent = userMessage;
+            if (!message.trim() && !fileInput.files.length) return;
+
+            const userBubble = document.createElement('div');
+            userBubble.className = 'message user';
+            userBubble.textContent = message || "[file uploaded]";
             responseBox.appendChild(userBubble);
 
-            messageInput.value = "";
-
             const formData = new FormData();
-            formData.append("message", userMessage);
-            formData.append("user_id", getUserId());
+            formData.append("message", message);
+            formData.append("user_id", userId);
             if (fileInput.files.length > 0) {
                 formData.append("file", fileInput.files[0]);
             }
 
-            const res = await fetch("/chat", {
-                method: "POST",
+            document.getElementById('message').value = '';
+            fileInput.value = '';
+
+            const res = await fetch('/chat', {
+                method: 'POST',
                 body: formData
             });
 
             const data = await res.json();
-
-            const botBubble = document.createElement("div");
-            botBubble.className = "message assistant";
+            const botBubble = document.createElement('div');
+            botBubble.className = 'message assistant';
             botBubble.textContent = data.reply;
             responseBox.appendChild(botBubble);
 
             responseBox.scrollTop = responseBox.scrollHeight;
-            fileInput.value = ""; // clear file input
-        }
+        });
 
         function getUserId() {
             const name = "user_id=";
@@ -183,4 +171,3 @@
     </script>
 </body>
 </html>
-
