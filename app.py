@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import sqlite3
 from werkzeug.utils import secure_filename
 from datetime import timedelta
+import PyPDF2
 
 # === C.A.R.A.'s Memory System ===
 def remember_fact(user_id, topic, fact):
@@ -64,11 +65,31 @@ def chat():
     memory_text = "\n".join([f"{t}: {f}" for t, f in memories])
 
     file_note = ""
+    file_content = ""
     if uploaded_file and allowed_file(uploaded_file.filename):
         filename = secure_filename(uploaded_file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         uploaded_file.save(filepath)
-        file_note = f"\nThe user also uploaded a file named '{filename}'. Provide guidance, summarize, or explain its likely contents as relevant."
+
+        # Try to read PDF or TXT
+        ext = filename.rsplit('.', 1)[1].lower()
+        if ext == 'pdf':
+            try:
+                with open(filepath, 'rb') as f:
+                    reader = PyPDF2.PdfReader(f)
+                    file_content = " ".join(page.extract_text() for page in reader.pages if page.extract_text())
+            except Exception as e:
+                file_content = f"(Could not read PDF contents due to error: {e})"
+        elif ext == 'txt':
+            try:
+                with open(filepath, 'r') as f:
+                    file_content = f.read()
+            except Exception as e:
+                file_content = f"(Could not read TXT contents due to error: {e})"
+        else:
+            file_content = f"(File '{filename}' was uploaded but cannot be interpreted as plain text.)"
+
+        file_note = f"\nThe user uploaded a file named '{filename}'. Here is its content for reference:\n{file_content[:3000]}"
     else:
         file_note = "\nNo supported file uploaded or invalid format."
 
