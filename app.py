@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import sqlite3
 from werkzeug.utils import secure_filename
 from datetime import timedelta
-import PyPDF2
+from PyPDF2 import PdfReader
 
 # === C.A.R.A.'s Memory System ===
 def remember_fact(user_id, topic, fact):
@@ -40,6 +40,16 @@ ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def extract_text_from_pdf(path):
+    try:
+        reader = PdfReader(path)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() or ""
+        return text[:1000]  # limit to first 1000 characters
+    except Exception as e:
+        return f"[Error reading PDF: {e}]"
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -62,29 +72,22 @@ def chat():
     memory_text = "\n".join([f"{t}: {f}" for t, f in memories])
 
     file_note = ""
-    extracted_content = ""
     if uploaded_file and allowed_file(uploaded_file.filename):
         filename = secure_filename(uploaded_file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         uploaded_file.save(filepath)
 
-        if filename.endswith(".pdf"):
-            try:
-                with open(filepath, "rb") as f:
-                    reader = PyPDF2.PdfReader(f)
-                    extracted_content = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-            except Exception as e:
-                extracted_content = f"(Could not read PDF content: {e})"
-        elif filename.endswith(".txt"):
-            try:
-                with open(filepath, "r") as f:
-                    extracted_content = f.read()
-            except Exception as e:
-                extracted_content = f"(Could not read text file: {e})"
+        if filename.lower().endswith(".pdf"):
+            file_content = extract_text_from_pdf(filepath)
+        elif filename.lower().endswith(".txt"):
+            with open(filepath, 'r', encoding='utf-8') as f:
+                file_content = f.read(1000)  # limit to 1000 chars
+        else:
+            file_content = f"[File uploaded: {filename}. Not a text-based file, so content not parsed.]"
 
-        file_note = f"\nThe user uploaded a file named '{filename}'. Here's the content to reference or respond to:\n{extracted_content}"
-    else:
-        file_note = "\nNo supported file uploaded or invalid format."
+        file_note = f"\nThe user uploaded a file named '{filename}'. Here's a preview of the contents:\n{file_content}"
+    elif uploaded_file:
+        file_note = f"\nThe user uploaded a file, but the format is not supported."
 
     chat_history = session.get(user_id, [])
     chat_history.append({"role": "user", "content": user_message})
