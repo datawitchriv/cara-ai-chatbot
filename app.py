@@ -34,6 +34,11 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -43,6 +48,9 @@ def chat():
     user_id = request.form.get("user_id", "guest")
     user_message = request.form.get("message", "")
     uploaded_file = request.files.get("file")
+
+    print("Uploaded file:", uploaded_file)
+    print("User message:", user_message)
 
     if not user_id.startswith("user_"):
         user_id = "guest"
@@ -56,11 +64,13 @@ def chat():
     memory_text = "\n".join([f"{t}: {f}" for t, f in memories])
 
     file_note = ""
-    if uploaded_file:
+    if uploaded_file and allowed_file(uploaded_file.filename):
         filename = secure_filename(uploaded_file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         uploaded_file.save(filepath)
         file_note = f"\nThe user also uploaded a file named '{filename}'. Provide guidance, summarize, or explain its likely contents as relevant."
+    else:
+        file_note = "\nNo supported file uploaded or invalid format."
 
     chat_history = session.get(user_id, [])
     chat_history.append({"role": "user", "content": user_message})
@@ -102,4 +112,3 @@ Here’s what you remember from their last few messages (if useful):
 
 if __name__ == "__main__":
     app.run(debug=True)
-
