@@ -50,9 +50,6 @@ def chat():
     user_message = request.form.get("message", "")
     uploaded_file = request.files.get("file")
 
-    print("Uploaded file:", uploaded_file)
-    print("User message:", user_message)
-
     if not user_id.startswith("user_"):
         user_id = "guest"
 
@@ -65,31 +62,27 @@ def chat():
     memory_text = "\n".join([f"{t}: {f}" for t, f in memories])
 
     file_note = ""
-    file_content = ""
+    extracted_content = ""
     if uploaded_file and allowed_file(uploaded_file.filename):
         filename = secure_filename(uploaded_file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         uploaded_file.save(filepath)
 
-        # Try to read PDF or TXT
-        ext = filename.rsplit('.', 1)[1].lower()
-        if ext == 'pdf':
+        if filename.endswith(".pdf"):
             try:
-                with open(filepath, 'rb') as f:
+                with open(filepath, "rb") as f:
                     reader = PyPDF2.PdfReader(f)
-                    file_content = " ".join(page.extract_text() for page in reader.pages if page.extract_text())
+                    extracted_content = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
             except Exception as e:
-                file_content = f"(Could not read PDF contents due to error: {e})"
-        elif ext == 'txt':
+                extracted_content = f"(Could not read PDF content: {e})"
+        elif filename.endswith(".txt"):
             try:
-                with open(filepath, 'r') as f:
-                    file_content = f.read()
+                with open(filepath, "r") as f:
+                    extracted_content = f.read()
             except Exception as e:
-                file_content = f"(Could not read TXT contents due to error: {e})"
-        else:
-            file_content = f"(File '{filename}' was uploaded but cannot be interpreted as plain text.)"
+                extracted_content = f"(Could not read text file: {e})"
 
-        file_note = f"\nThe user uploaded a file named '{filename}'. Here is its content for reference:\n{file_content[:3000]}"
+        file_note = f"\nThe user uploaded a file named '{filename}'. Here's the content to reference or respond to:\n{extracted_content}"
     else:
         file_note = "\nNo supported file uploaded or invalid format."
 
