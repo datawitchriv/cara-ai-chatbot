@@ -211,9 +211,18 @@
       const data = await res.json();
       const botBubble = document.createElement("div");
       botBubble.className = "message assistant";
-      botBubble.textContent = data.reply;
       responseBox.appendChild(botBubble);
-      responseBox.scrollTop = responseBox.scrollHeight;
+
+      let i = 0;
+      function typeChar() {
+        if (i < data.reply.length) {
+          botBubble.textContent += data.reply.charAt(i);
+          i++;
+          responseBox.scrollTop = responseBox.scrollHeight;
+          setTimeout(typeChar, 20);
+        }
+      }
+      typeChar();
     });
 
     function getUserId() {
@@ -233,3 +242,4 @@
   </script>
 </body>
 </html>
+
