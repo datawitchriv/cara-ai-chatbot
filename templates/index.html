@@ -5,15 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>C.A.R.A. Chat</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #121212;
       color: #f1f1f1;
+      height: 100vh;
       display: flex;
       flex-direction: column;
-      height: 100vh;
     }
 
     h1 {
@@ -27,6 +31,40 @@
       font-size: 0.9rem;
       color: #ccc;
       margin-bottom: 1rem;
+    }
+
+    .loading-dots {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .loading-dots span {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin: 0 2px;
+      background-color: #f1f1f1;
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: blink 1.4s infinite;
+    }
+
+    .loading-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .loading-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0.3; }
+      40% { opacity: 1; }
+    }
+
+    .chat-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     .chat-container {
@@ -57,11 +95,11 @@
     }
 
     .input-container {
-      padding: 1rem;
       display: flex;
       gap: 0.5rem;
       border-top: 1px solid #333;
       align-items: center;
+      padding: 1rem;
     }
 
     textarea {
@@ -101,25 +139,36 @@
 <body>
   <h1>C.A.R.A.</h1>
   <p class="subtitle">Your custom AI assistant is here to help 💬</p>
+  <div class="loading-dots" id="loading">
+    <span></span><span></span><span></span>
+  </div>
 
-  <div class="chat-container" id="responseBox"></div>
-
-  <form id="chatForm" enctype="multipart/form-data">
-    <div class="input-container">
-      <textarea id="message" name="message" rows="2" placeholder="Ask me anything..."></textarea>
-      <input type="file" id="file" name="file" />
-      <label for="file" class="upload-icon" title="Attach a file">📎</label>
-      <button type="submit">Send</button>
-    </div>
-  </form>
+  <div class="chat-wrapper" id="chatWrapper" style="display:none;">
+    <div class="chat-container" id="responseBox"></div>
+    <form id="chatForm" enctype="multipart/form-data">
+      <div class="input-container">
+        <textarea id="message" name="message" rows="2" placeholder="Ask me anything..."></textarea>
+        <input type="file" id="file" name="file" />
+        <label for="file" class="upload-icon" title="Attach a file">📎</label>
+        <button type="submit">Send</button>
+      </div>
+    </form>
+  </div>
 
   <script>
+    window.onload = function() {
+      setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('chatWrapper').style.display = 'flex';
+        document.getElementById('responseBox').scrollTop = document.getElementById('responseBox').scrollHeight;
+      }, 1000);
+    };
+
     const form = document.getElementById('chatForm');
     const responseBox = document.getElementById('responseBox');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-
       const messageInput = document.getElementById("message");
       const fileInput = document.getElementById("file");
       const message = messageInput.value;
