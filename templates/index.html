@@ -12,10 +12,10 @@
     html, body {
       margin: 0;
       padding: 0;
+      height: 100%;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #121212;
       color: #f1f1f1;
-      height: 100vh;
     }
 
     body {
@@ -68,6 +68,7 @@
       flex: 1;
       display: flex;
       flex-direction: column;
+      height: 100%;
     }
 
     .chat-container {
@@ -77,6 +78,7 @@
       flex-direction: column;
       padding: 1rem;
       gap: 1rem;
+      padding-bottom: 6rem; /* reserve space for fixed input */
     }
 
     .message {
@@ -97,8 +99,14 @@
       color: #b4f8c8;
     }
 
-    padding: 1rem;
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    .input-container {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: #121212;
+      padding: 1rem;
+      padding-bottom: calc(1rem + env(safe-area-inset-bottom));
       display: flex;
       gap: 0.5rem;
       border-top: 1px solid #333;
