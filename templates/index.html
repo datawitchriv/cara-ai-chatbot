@@ -97,11 +97,8 @@
       color: #b4f8c8;
     }
 
-    .input-container {
-      position: sticky;
-      bottom: 0;
-      background-color: #121212;
-      padding: 1rem;
+    padding: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
       display: flex;
       gap: 0.5rem;
       border-top: 1px solid #333;
