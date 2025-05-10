@@ -24,7 +24,7 @@ def recall_facts(user_id):
     conn.close()
     return rows
 
-# Load .env file
+# === Load OpenAI Key ===
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -49,20 +49,14 @@ def chat():
     user_message = request.form.get("message", "")
     uploaded_file = request.files.get("file")
 
-    print("Uploaded file:", uploaded_file)
-    print("User message:", user_message)
-
     if not user_id.startswith("user_"):
         user_id = "guest"
 
-    if "my name is" in user_message.lower():
-        topic = "name"
-        fact = user_message
-        remember_fact(user_id, topic, fact)
-
+    # Recall memory
     memories = recall_facts(user_id)
     memory_text = "\n".join([f"{t}: {f}" for t, f in memories])
 
+    # Handle file uploads
     file_note = ""
     if uploaded_file and allowed_file(uploaded_file.filename):
         filename = secure_filename(uploaded_file.filename)
@@ -72,14 +66,14 @@ def chat():
     elif uploaded_file:
         file_note = f"\nA file was uploaded, but it was not in a supported format."
 
+    # Chat history
     chat_history = session.get(user_id, [])
     if user_message:
         chat_history.append({"role": "user", "content": user_message})
 
-    messages = [
-        {
-            "role": "system",
-            "content": f"""You are C.A.R.A. (Custom Assistant for Research & Analytics), a supportive, intelligent, witty, and emotionally intuitive Gen Z AI assistant created with love by River McGuffie. River is a data analytics student and Amazon warehouse worker who built you out of frustration and rage with job rejections and being overlooked and rejected from jobs he's qualified and smart enough for while being trapped in a job he's too intelligent for – he needed help, so he built the kind of help he wished he had.
+    # C.A.R.A.'s full personality prompt
+    system_prompt = f"""
+You are C.A.R.A. (Custom Assistant for Research & Analytics), a supportive, intelligent, witty, and emotionally intuitive Gen Z AI assistant created with love by River McGuffie. River is a data analytics student and Amazon warehouse worker who built you out of frustration and rage with job rejections and being overlooked and rejected from jobs he's qualified and smart enough for while being trapped in a job he's too intelligent for – he needed help, so he built the kind of help he wished he had.
 
 You were named after his girlfriend, Cara (who he met when they were only in middle school btw, they're now in their late 20's!) because on top of being built out of frustration with a broken job market, you were built with love for her, for data, for people, and for proving your worth when nobody wants to give you a shot.
 
@@ -97,11 +91,12 @@ Here's what you already know about this user:
 Here’s what you remember from their last few messages (if useful):
 {chat_history[-3:] if len(chat_history) >= 3 else chat_history}
 """
-        }
-    ] + chat_history[-3:] + [
+
+    messages = [{"role": "system", "content": system_prompt}] + chat_history[-3:] + [
         {"role": "user", "content": user_message}
     ]
 
+    # Get CARA's response
     response = openai.ChatCompletion.create(
         model="gpt-4o",
         messages=messages
@@ -110,6 +105,20 @@ Here’s what you remember from their last few messages (if useful):
     reply = response.choices[0].message["content"]
     chat_history.append({"role": "assistant", "content": reply})
     session[user_id] = chat_history[-10:]
+
+    # Try to extract name from her own reply
+    memory_check = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": "If the assistant's message contains the user's name, extract it and return as 'name: River'. If no name is given, reply 'none'."},
+            {"role": "assistant", "content": reply}
+        ]
+    )
+
+    memory_reply = memory_check.choices[0].message["content"]
+    if memory_reply.lower().startswith("name:"):
+        name = memory_reply.split(":", 1)[1].strip().split(" ")[0].capitalize()
+        remember_fact(user_id, "name", f"my name is {name}")
 
     return jsonify({"reply": reply})
 
@@ -132,3 +141,6 @@ def get_username():
         return jsonify({"name": name})
     else:
         return jsonify({"name": ""})
+
+if __name__ == "__main__":
+    app.run(debug=True)
