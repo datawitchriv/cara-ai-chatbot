@@ -56,7 +56,6 @@
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-      
 
     @keyframes pulseEnergy {
       0% {
@@ -71,11 +70,6 @@
         background-position: -200% 0;
         opacity: 0.8;
       }
-    }
-
-    @keyframes blink {
-      0%, 80%, 100% { opacity: 0.3; }
-      40% { opacity: 1; }
     }
 
     .chat-wrapper {
@@ -103,14 +97,19 @@
     }
 
     .user {
-      background-color: #333;
+      background-color: #2a2a2a;
       align-self: flex-end;
+      color: #f5f5f5;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     }
 
     .assistant {
       background-color: #1f1f1f;
       align-self: flex-start;
-      color: #b4f8c8;
+      color: #e0e0e0;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     }
 
     .input-container {
@@ -191,7 +190,7 @@
   </div>
 
   <script>
-    window.onload = function() {
+    window.onload = function () {
       setTimeout(() => {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('chatWrapper').style.display = 'flex';
@@ -205,7 +204,7 @@
     const responseBox = document.getElementById('responseBox');
     const greetingEl = document.getElementById('greeting');
 
-    document.getElementById("message").addEventListener("keydown", function(e) {
+    document.getElementById("message").addEventListener("keydown", function (e) {
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (!isMobile && e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -290,14 +289,6 @@
     }
 
     updateGreeting();
-
-    if (!localStorage.getItem("caraUserName")) {
-      const name = prompt("Hi there! What should I call you?");
-      if (name) {
-        localStorage.setItem("caraUserName", name);
-        updateGreeting();
-      }
-    }
   </script>
 </body>
 </html>
