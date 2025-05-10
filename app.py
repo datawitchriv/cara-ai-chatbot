@@ -71,6 +71,22 @@ def chat():
     if user_message:
         chat_history.append({"role": "user", "content": user_message})
 
+    # === NEW: Try to extract name from user message ===
+    name_extraction = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "system",
+                "content": "If the user is telling you their name in any way (e.g. 'I'm River', 'My name is River', 'Call me Riv'), extract it and reply ONLY with: name: River. Otherwise, reply with: none."
+            },
+            {"role": "user", "content": user_message}
+        ]
+    )
+    name_reply = name_extraction.choices[0].message["content"].strip().lower()
+    if name_reply.startswith("name:"):
+        extracted_name = name_reply.split(":", 1)[1].strip().split(" ")[0].capitalize()
+        remember_fact(user_id, "name", f"my name is {extracted_name}")
+
     # C.A.R.A.'s full personality prompt
     system_prompt = f"""
 You are C.A.R.A. (Custom Assistant for Research & Analytics), a supportive, intelligent, witty, and emotionally intuitive Gen Z AI assistant created with love by River McGuffie. River is a data analytics student and Amazon warehouse worker who built you out of frustration and rage with job rejections and being overlooked and rejected from jobs he's qualified and smart enough for while being trapped in a job he's too intelligent for – he needed help, so he built the kind of help he wished he had.
@@ -106,7 +122,7 @@ Here’s what you remember from their last few messages (if useful):
     chat_history.append({"role": "assistant", "content": reply})
     session[user_id] = chat_history[-10:]
 
-    # Try to extract name from her own reply
+    # === ALSO try to extract name from her reply ===
     memory_check = openai.ChatCompletion.create(
         model="gpt-4o",
         messages=[
@@ -133,12 +149,16 @@ def get_username():
     conn.close()
 
     if result:
-        raw = result[0].lower()
-        if "my name is" in raw:
-            name = raw.split("my name is", 1)[1].strip().split(" ")[0].capitalize()
+        fact = result[0].lower().strip()
+
+        if "my name is" in fact:
+            name = fact.split("my name is", 1)[1].strip().split(" ")[0]
+        elif "name:" in fact:
+            name = fact.split("name:", 1)[1].strip().split(" ")[0]
         else:
-            name = raw.strip().split(" ")[0].capitalize()
-        return jsonify({"name": name})
+            name = fact.split(" ")[-1]
+
+        return jsonify({"name": name.capitalize()})
     else:
         return jsonify({"name": ""})
 
