@@ -140,6 +140,8 @@ Here’s what you remember from their last few messages (if useful):
 
 @app.route("/get-username")
 def get_username():
+    import re
+
     user_id = request.cookies.get("user_id", "guest")
     conn = sqlite3.connect('cara_memory.db')
     c = conn.cursor()
@@ -149,18 +151,21 @@ def get_username():
     conn.close()
 
     if result:
-        fact = result[0].lower().strip()
+        fact = result[0].strip()
 
-        if "my name is" in fact:
-            name = fact.split("my name is", 1)[1].strip().split(" ")[0]
-        elif "name:" in fact:
-            name = fact.split("name:", 1)[1].strip().split(" ")[0]
+        # Try regex patterns for natural phrasing
+        name_match = re.search(r"\b(?:my name is|name:|i['’]?m|call me|it['’]?s)\s+([A-Z][a-z]+)", fact, re.IGNORECASE)
+        if name_match:
+            name = name_match.group(1).capitalize()
         else:
-            name = fact.split(" ")[-1]
-
-        return jsonify({"name": name.capitalize()})
+            # Fallback: grab first capitalized word in the whole sentence
+            fallback = re.findall(r"\b[A-Z][a-z]+", fact)
+            name = fallback[0] if fallback else ""
+        
+        return jsonify({"name": name})
     else:
         return jsonify({"name": ""})
+
 
 if __name__ == "__main__":
     app.run(debug=True)
