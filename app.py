@@ -124,11 +124,11 @@ def get_username():
     conn.close()
 
     if result:
-        raw = result[0].lower().replace("my name is", "").strip()
-        name = raw.split(" ")[0].capitalize()
+        raw = result[0].lower()
+        if "my name is" in raw:
+            name = raw.split("my name is", 1)[1].strip().split(" ")[0].capitalize()
+        else:
+            name = raw.strip().split(" ")[0].capitalize()
         return jsonify({"name": name})
     else:
         return jsonify({"name": ""})
-
-if __name__ == "__main__":
-    app.run(debug=True)
