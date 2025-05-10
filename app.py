@@ -52,7 +52,7 @@ def chat():
     if not user_id.startswith("user_"):
         user_id = "guest"
 
-    # Memory triggers (custom facts)
+    # Memory triggers
     lowered = user_message.lower()
     if "my name is" in lowered:
         remember_fact(user_id, "name", user_message)
@@ -63,11 +63,11 @@ def chat():
     if "my dream job is" in lowered:
         remember_fact(user_id, "dream_job", user_message)
 
-    # Recall memory text for system prompt
+    # Recall memories
     memories = recall_facts(user_id)
     memory_text = "\n".join([f"{t}: {f}" for t, f in memories])
 
-    # File handling (optional)
+    # File handling
     file_note = ""
     if uploaded_file and allowed_file(uploaded_file.filename):
         filename = secure_filename(uploaded_file.filename)
@@ -77,7 +77,7 @@ def chat():
     elif uploaded_file:
         file_note = f"\nA file was uploaded, but it was not in a supported format."
 
-    # Chat history management
+    # Chat history
     chat_history = session.get(user_id, [])
     if user_message:
         chat_history.append({"role": "user", "content": user_message})
@@ -108,10 +108,11 @@ Here’s what you remember from their last few messages (if useful):
     chat_history.append({"role": "assistant", "content": reply})
     session[user_id] = chat_history[-10:]
 
-    return jsonify({"reply": reply})
+    response = jsonify({"reply": reply})
+    response.set_cookie("user_id", user_id)
+    return response
 
 
-# === Route for frontend greeting ===
 @app.route("/get-username")
 def get_username():
     user_id = request.cookies.get("user_id", "guest")
