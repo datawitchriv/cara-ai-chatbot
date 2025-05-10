@@ -199,7 +199,7 @@
         document.getElementById('responseBox').scrollTop = document.getElementById('responseBox').scrollHeight;
 
         // Wait a moment for localStorage to be ready
-        setTimeout(updateGreeting, 100);
+        setTimeout(updateGreeting, 300);
       }, 1000);
     };
 
@@ -284,12 +284,26 @@
       return "Good evening";
     }
 
-    function updateGreeting() {
-      const userName = localStorage.getItem("caraUserName");
-      const greeting = getTimeBasedGreeting();
-      const name = userName && userName !== "null" && userName.trim() !== "" ? `, ${userName}` : "";
-      document.getElementById("greeting").textContent = `${greeting}${name}.`;
+    async function updateGreeting() {
+  const greeting = getTimeBasedGreeting();
+  let name = "";
+
+  try {
+    const res = await fetch("/get-username", { credentials: "include" });
+    const data = await res.json();
+    if (data.name && data.name.trim() !== "") {
+      name = `, ${data.name}`;
     }
+  } catch (err) {
+    console.error("Failed to fetch name from backend:", err);
+  }
+
+  const greetingEl = document.getElementById("greeting");
+  if (greetingEl) {
+    greetingEl.textContent = `${greeting}${name}.`;
+  }
+}
+
   </script>
 </body>
 </html>
