@@ -71,13 +71,13 @@ def chat():
     if user_message:
         chat_history.append({"role": "user", "content": user_message})
 
-    # === NEW: Try to extract name from user message ===
+    # === Extract name using GPT from user message ===
     name_extraction = openai.ChatCompletion.create(
         model="gpt-4o",
         messages=[
             {
                 "role": "system",
-                "content": "If the user is telling you their name in any way (e.g. 'I'm River', 'My name is River', 'Call me Riv'), extract it and reply ONLY with: name: River. Otherwise, reply with: none."
+                "content": "If the user has shared their name in any way (e.g. 'I'm River', 'My name is River', 'Call me Riv', etc.), extract and return ONLY: name: River. Otherwise reply: none."
             },
             {"role": "user", "content": user_message}
         ]
@@ -85,7 +85,7 @@ def chat():
     name_reply = name_extraction.choices[0].message["content"].strip().lower()
     if name_reply.startswith("name:"):
         extracted_name = name_reply.split(":", 1)[1].strip().split(" ")[0].capitalize()
-        remember_fact(user_id, "name", f"my name is {extracted_name}")
+        remember_fact(user_id, "name", extracted_name)
 
     # C.A.R.A.'s full personality prompt
     system_prompt = f"""
@@ -122,50 +122,19 @@ Here’s what you remember from their last few messages (if useful):
     chat_history.append({"role": "assistant", "content": reply})
     session[user_id] = chat_history[-10:]
 
-    # === ALSO try to extract name from her reply ===
-    memory_check = openai.ChatCompletion.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": "If the assistant's message contains the user's name, extract it and return as 'name: River'. If no name is given, reply 'none'."},
-            {"role": "assistant", "content": reply}
-        ]
-    )
-
-    memory_reply = memory_check.choices[0].message["content"]
-    if memory_reply.lower().startswith("name:"):
-        name = memory_reply.split(":", 1)[1].strip().split(" ")[0].capitalize()
-        remember_fact(user_id, "name", f"my name is {name}")
-
     return jsonify({"reply": reply})
 
 @app.route("/get-username")
 def get_username():
-    import re
-
     user_id = request.cookies.get("user_id", "guest")
     conn = sqlite3.connect('cara_memory.db')
     c = conn.cursor()
-    c.execute('CREATE TABLE IF NOT EXISTS memory (user_id TEXT, topic TEXT, fact TEXT)')
     c.execute('SELECT fact FROM memory WHERE user_id = ? AND topic = "name" ORDER BY ROWID DESC LIMIT 1', (user_id,))
     result = c.fetchone()
     conn.close()
 
-    if result:
-        fact = result[0].strip()
-
-        # Try regex patterns for natural phrasing
-        name_match = re.search(r"\b(?:my name is|name:|i['’]?m|call me|it['’]?s)\s+([A-Z][a-z]+)", fact, re.IGNORECASE)
-        if name_match:
-            name = name_match.group(1).capitalize()
-        else:
-            # Fallback: grab first capitalized word in the whole sentence
-            fallback = re.findall(r"\b[A-Z][a-z]+", fact)
-            name = fallback[0] if fallback else ""
-        
-        return jsonify({"name": name})
-    else:
-        return jsonify({"name": ""})
-
+    name = result[0].strip().capitalize() if result else ""
+    return jsonify({"name": name})
 
 if __name__ == "__main__":
     app.run(debug=True)
