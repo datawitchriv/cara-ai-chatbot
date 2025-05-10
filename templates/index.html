@@ -197,6 +197,9 @@
         const messageBox = document.getElementById("message");
         messageBox.focus();
         document.getElementById('responseBox').scrollTop = document.getElementById('responseBox').scrollHeight;
+
+        // Wait a moment for localStorage to be ready
+        setTimeout(updateGreeting, 100);
       }, 1000);
     };
 
@@ -284,11 +287,9 @@
     function updateGreeting() {
       const userName = localStorage.getItem("caraUserName");
       const greeting = getTimeBasedGreeting();
-      const name = userName ? `, ${userName}` : "";
+      const name = userName && userName !== "null" && userName.trim() !== "" ? `, ${userName}` : "";
       document.getElementById("greeting").textContent = `${greeting}${name}.`;
     }
-
-    updateGreeting();
   </script>
 </body>
 </html>
