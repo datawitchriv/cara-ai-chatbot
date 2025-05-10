@@ -58,18 +58,9 @@
     }
 
     @keyframes pulseEnergy {
-      0% {
-        background-position: -200% 0;
-        opacity: 0.8;
-      }
-      50% {
-        background-position: 200% 0;
-        opacity: 1;
-      }
-      100% {
-        background-position: -200% 0;
-        opacity: 0.8;
-      }
+      0% { background-position: -200% 0; opacity: 0.8; }
+      50% { background-position: 200% 0; opacity: 1; }
+      100% { background-position: -200% 0; opacity: 0.8; }
     }
 
     .chat-wrapper {
@@ -167,6 +158,22 @@
     button:hover {
       background: rgba(255, 255, 255, 0.1);
     }
+
+    /* 🌈 Pastel rainbow name gradient */
+    .rainbow-name {
+      background: linear-gradient(90deg, #fbc2eb, #a6c1ee, #fbc2eb, #a6c1ee);
+      background-size: 400% 100%;
+      animation: rainbowShift 6s ease-in-out infinite;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 600;
+    }
+
+    @keyframes rainbowShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
   </style>
 </head>
 <body>
@@ -197,8 +204,6 @@
         const messageBox = document.getElementById("message");
         messageBox.focus();
         document.getElementById('responseBox').scrollTop = document.getElementById('responseBox').scrollHeight;
-
-        // Wait a moment for localStorage to be ready
         setTimeout(updateGreeting, 300);
       }, 1000);
     };
@@ -285,25 +290,24 @@
     }
 
     async function updateGreeting() {
-  const greeting = getTimeBasedGreeting();
-  let name = "";
+      const greeting = getTimeBasedGreeting();
+      let name = "";
 
-  try {
-    const res = await fetch("/get-username", { credentials: "include" });
-    const data = await res.json();
-    if (data.name && data.name.trim() !== "") {
-      name = `, ${data.name}`;
+      try {
+        const res = await fetch("/get-username", { credentials: "include" });
+        const data = await res.json();
+        if (data.name && data.name.trim() !== "") {
+          name = `, <span class="rainbow-name">${data.name}</span>`;
+        }
+      } catch (err) {
+        console.error("Failed to fetch name from backend:", err);
+      }
+
+      const greetingEl = document.getElementById("greeting");
+      if (greetingEl) {
+        greetingEl.innerHTML = `${greeting}${name}.`;
+      }
     }
-  } catch (err) {
-    console.error("Failed to fetch name from backend:", err);
-  }
-
-  const greetingEl = document.getElementById("greeting");
-  if (greetingEl) {
-    greetingEl.textContent = `${greeting}${name}.`;
-  }
-}
-
   </script>
 </body>
 </html>
