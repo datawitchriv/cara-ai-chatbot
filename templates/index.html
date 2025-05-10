@@ -30,14 +30,13 @@
       font-size: 2.6rem;
       letter-spacing: 0.5px;
       font-weight: 700;
-      color: #ffffff;
-      background: linear-gradient(90deg, #ffffff, #bbbbbb, #ffffff);
-      background-size: 200% auto;
+      background: linear-gradient(90deg, #444, #fff, #444);
+      background-size: 200% 100%;
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
       -webkit-text-fill-color: transparent;
-      animation: shimmer 3s linear infinite;
+      animation: pulseEnergy 12s infinite ease-in-out;
     }
 
     .greeting-text {
@@ -57,39 +56,21 @@
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+      
 
-    @keyframes shimmer {
+    @keyframes pulseEnergy {
       0% {
-        background-position: 200% center;
+        background-position: -200% 0;
+        opacity: 0.8;
+      }
+      50% {
+        background-position: 200% 0;
+        opacity: 1;
       }
       100% {
-        background-position: -200% center;
+        background-position: -200% 0;
+        opacity: 0.8;
       }
-    }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .loading-dots {
-      text-align: center;
-      margin-top: 1rem;
-    }
-
-    .loading-dots span {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      margin: 0 2px;
-      background-color: #f1f1f1;
-      border-radius: 50%;
-      opacity: 0.3;
-      animation: blink 1.4s infinite;
-    }
-
-    .loading-dots span:nth-child(2) {
-      animation-delay: 0.2s;
-    }
-    .loading-dots span:nth-child(3) {
-      animation-delay: 0.4s;
     }
 
     @keyframes blink {
@@ -309,6 +290,14 @@
     }
 
     updateGreeting();
+
+    if (!localStorage.getItem("caraUserName")) {
+      const name = prompt("Hi there! What should I call you?");
+      if (name) {
+        localStorage.setItem("caraUserName", name);
+        updateGreeting();
+      }
+    }
   </script>
 </body>
 </html>
