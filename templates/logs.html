@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>C.A.R.A. Logs</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 2rem; }
+    h2 { color: #222; margin-top: 2rem; }
+    .log-entry { background: #fff; padding: 1rem; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .timestamp { font-size: 0.85rem; color: #888; margin-bottom: 0.3rem; display: block; }
+    .sender { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>C.A.R.A. Message Logs</h1>
+  {% for ip, messages in logs.items() %}
+    <h2>Visitor: {{ ip }}</h2>
+    {% for msg in messages %}
+      <div class="log-entry">
+        <span class="timestamp">{{ msg.timestamp }}</span>
+        <span class="sender">{{ msg.sender }}:</span> {{ msg.message }}
+      </div>
+    {% endfor %}
+  {% endfor %}
+</body>
+</html>

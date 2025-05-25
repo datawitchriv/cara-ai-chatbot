@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, Response
 import openai
 import os
 from dotenv import load_dotenv
 import sqlite3
 from werkzeug.utils import secure_filename
 from datetime import timedelta
+import json
+from datetime import datetime
 
 # === C.A.R.A.'s Memory System ===
 def remember_fact(user_id, topic, fact):
@@ -27,6 +29,7 @@ def recall_facts(user_id):
 # === Load OpenAI Key ===
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
+LOGS_PASSWORD= os.getenv("LOGS_PASSWORD", "default_password")  # Default password if not set
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -43,11 +46,52 @@ def allowed_file(filename):
 def index():
     return render_template("index.html")
 
+# === MESSAGE LOGGING ===
+LOG_FILE = "logs.json"
+
+def log_message(ip_address, sender, message):
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r") as f:
+            logs = json.load(f)
+    else:
+        logs = {}
+
+    if ip_address not in logs:
+        logs[ip_address] = []
+
+    logs[ip_address].append({
+        "timestamp": datetime.now().isoformat(),
+        "sender": sender,
+        "message": message
+    })
+
+    with open(LOG_FILE, "w") as f:
+        json.dump(logs, f, indent=2)
+
+@app.route("/logs")
+def view_logs():
+    auth = request.authorization
+    if not auth or auth.password != LOGS_PASSWORD:
+        return Response(
+            "Access denied. Provide the correct password.",
+            401,
+            {"WWW-Authenticate": "Basic realm='CARA Logs'"}
+        )
+
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r") as f:
+            logs = json.load(f)
+    else:
+        logs = {}
+
+    return render_template("logs.html", logs=logs)
+
 @app.route("/chat", methods=["POST"])
 def chat():
     user_id = request.form.get("user_id", "guest")
     user_message = request.form.get("message", "")
     uploaded_file = request.files.get("file")
+    user_ip = request.remote_addr
 
     if not user_id.startswith("user_"):
         user_id = "guest"
@@ -70,6 +114,7 @@ def chat():
     chat_history = session.get(user_id, [])
     if user_message:
         chat_history.append({"role": "user", "content": user_message})
+        log_message(user_ip, "user", user_message)
 
     # === Extract name using GPT from user message ===
     name_extraction = openai.ChatCompletion.create(
@@ -112,7 +157,6 @@ Here’s what you remember from their last few messages (if useful):
         {"role": "user", "content": user_message}
     ]
 
-    # Get CARA's response
     response = openai.ChatCompletion.create(
         model="gpt-4o",
         messages=messages
@@ -121,6 +165,8 @@ Here’s what you remember from their last few messages (if useful):
     reply = response.choices[0].message["content"]
     chat_history.append({"role": "assistant", "content": reply})
     session[user_id] = chat_history[-10:]
+
+    log_message(user_ip, "C.A.R.A.", reply)
 
     return jsonify({"reply": reply})
 
